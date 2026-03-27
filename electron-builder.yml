@@ -1,0 +1,19 @@
+appId: com.wechat-reply.assistant
+productName: 微信快捷回复助手
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.*'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+mac:
+  target:
+    - dmg
+    - zip
+  artifactName: ${name}-${version}-${arch}.${ext}
+  entitlementsInherit: resources/entitlements.mac.plist
+dmg:
+  artifactName: ${name}-${version}.${ext}
