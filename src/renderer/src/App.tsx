@@ -7,7 +7,7 @@ import PhraseForm from './components/PhraseForm'
 import CategoryManager from './components/CategoryManager'
 import { usePhrases } from './hooks/usePhrases'
 import { useCategories } from './hooks/useCategories'
-import type { Phrase } from '../../shared/types'
+import type { Phrase, Attachment } from '../../shared/types'
 
 export default function App() {
   const { phrases, add: addPhrase, update: updatePhrase, remove: removePhrase } = usePhrases()
@@ -45,11 +45,11 @@ export default function App() {
     return result.sort((a, b) => a.order - b.order)
   }, [phrases, activeCategory, searchQuery])
 
-  const handleSavePhrase = async (title: string, content: string, categoryId: string) => {
+  const handleSavePhrase = async (title: string, content: string, categoryId: string, attachments: Attachment[]) => {
     if (editingPhrase) {
-      await updatePhrase(editingPhrase.id, { title, content, categoryId })
+      await updatePhrase(editingPhrase.id, { title, content, categoryId, attachments })
     } else {
-      await addPhrase(title, content, categoryId)
+      await addPhrase(title, content, categoryId, attachments)
     }
     setShowPhraseForm(false)
     setEditingPhrase(null)

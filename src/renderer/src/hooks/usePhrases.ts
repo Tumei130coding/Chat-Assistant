@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Phrase } from '../../../shared/types'
+import type { Phrase, Attachment } from '../../../shared/types'
 
 export function usePhrases() {
   const [phrases, setPhrases] = useState<Phrase[]>([])
@@ -15,14 +15,14 @@ export function usePhrases() {
     refresh()
   }, [refresh])
 
-  const add = async (title: string, content: string, categoryId: string) => {
-    await window.api.addPhrase(title, content, categoryId)
+  const add = async (title: string, content: string, categoryId: string, attachments: Attachment[] = []) => {
+    await window.api.addPhrase(title, content, categoryId, attachments)
     await refresh()
   }
 
   const update = async (
     id: string,
-    data: { title?: string; content?: string; categoryId?: string }
+    data: { title?: string; content?: string; categoryId?: string; attachments?: Attachment[] }
   ) => {
     await window.api.updatePhrase(id, data)
     await refresh()

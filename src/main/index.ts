@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, clipboard, screen } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, clipboard, screen, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import {
@@ -11,7 +11,11 @@ import {
   updatePhrase,
   deletePhrase,
   getSettings,
-  updateSettings
+  updateSettings,
+  saveAttachmentFile,
+  deleteAttachmentFile,
+  getAttachmentPath,
+  getAttachmentsBasePath
 } from './store'
 
 let mainWindow: BrowserWindow | null = null
@@ -113,11 +117,34 @@ function registerIpcHandlers(): void {
 
   // Phrases
   ipcMain.handle('get-phrases', () => getPhrases())
-  ipcMain.handle('add-phrase', (_, title: string, content: string, categoryId: string) =>
-    addPhrase(title, content, categoryId)
+  ipcMain.handle('add-phrase', (_, title: string, content: string, categoryId: string, attachments?) =>
+    addPhrase(title, content, categoryId, attachments)
   )
   ipcMain.handle('update-phrase', (_, id: string, data) => updatePhrase(id, data))
   ipcMain.handle('delete-phrase', (_, id: string) => deletePhrase(id))
+
+  // Attachments
+  ipcMain.handle('select-attachment-files', async () => {
+    if (!mainWindow) return []
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        { name: 'Images & PDFs', extensions: ['png', 'jpg', 'jpeg', 'gif', 'pdf'] }
+      ]
+    })
+    if (result.canceled) return []
+    return result.filePaths
+  })
+  ipcMain.handle('save-attachment', (_, sourcePath: string) => saveAttachmentFile(sourcePath))
+  ipcMain.handle('open-attachment', (_, storedFileName: string) => {
+    const fullPath = getAttachmentPath(storedFileName)
+    return shell.openPath(fullPath)
+  })
+  ipcMain.handle('delete-attachment-file', (_, storedFileName: string) => {
+    deleteAttachmentFile(storedFileName)
+    return true
+  })
+  ipcMain.handle('get-attachments-base-path', () => getAttachmentsBasePath())
 
   // Clipboard
   ipcMain.handle('copy-to-clipboard', (_, text: string) => {

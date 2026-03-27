@@ -9,11 +9,18 @@ const api = {
 
   // Phrases
   getPhrases: () => ipcRenderer.invoke('get-phrases'),
-  addPhrase: (title: string, content: string, categoryId: string) =>
-    ipcRenderer.invoke('add-phrase', title, content, categoryId),
-  updatePhrase: (id: string, data: { title?: string; content?: string; categoryId?: string }) =>
+  addPhrase: (title: string, content: string, categoryId: string, attachments?: unknown[]) =>
+    ipcRenderer.invoke('add-phrase', title, content, categoryId, attachments),
+  updatePhrase: (id: string, data: { title?: string; content?: string; categoryId?: string; attachments?: unknown[] }) =>
     ipcRenderer.invoke('update-phrase', id, data),
   deletePhrase: (id: string) => ipcRenderer.invoke('delete-phrase', id),
+
+  // Attachments
+  selectAttachmentFiles: () => ipcRenderer.invoke('select-attachment-files'),
+  saveAttachment: (sourcePath: string) => ipcRenderer.invoke('save-attachment', sourcePath),
+  openAttachment: (storedFileName: string) => ipcRenderer.invoke('open-attachment', storedFileName),
+  deleteAttachmentFile: (storedFileName: string) => ipcRenderer.invoke('delete-attachment-file', storedFileName),
+  getAttachmentsBasePath: () => ipcRenderer.invoke('get-attachments-base-path'),
 
   // Clipboard
   copyToClipboard: (text: string) => ipcRenderer.invoke('copy-to-clipboard', text),

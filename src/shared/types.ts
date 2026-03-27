@@ -5,12 +5,22 @@ export interface Category {
   createdAt: string
 }
 
+export interface Attachment {
+  id: string
+  originalName: string
+  storedFileName: string
+  mimeType: string
+  size: number
+  addedAt: string
+}
+
 export interface Phrase {
   id: string
   title: string
   content: string
   categoryId: string
   order: number
+  attachments: Attachment[]
   createdAt: string
   updatedAt: string
 }

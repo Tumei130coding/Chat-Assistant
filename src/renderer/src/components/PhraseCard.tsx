@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Phrase } from '../../../shared/types'
 
 interface Props {
@@ -10,12 +10,25 @@ interface Props {
 
 export default function PhraseCard({ phrase, categoryName, onEdit, onDelete }: Props) {
   const [copied, setCopied] = useState(false)
+  const [basePath, setBasePath] = useState('')
+
+  useEffect(() => {
+    if (phrase.attachments?.length > 0) {
+      window.api.getAttachmentsBasePath().then(setBasePath)
+    }
+  }, [phrase.attachments])
 
   const handleCopy = async () => {
     await window.api.copyToClipboard(phrase.content)
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
+
+  const handleOpenAttachment = (storedFileName: string) => {
+    window.api.openAttachment(storedFileName)
+  }
+
+  const attachments = phrase.attachments ?? []
 
   return (
     <div
@@ -29,8 +42,40 @@ export default function PhraseCard({ phrase, categoryName, onEdit, onDelete }: P
             <span className="shrink-0 px-1.5 py-0.5 text-[10px] text-gray-400 bg-gray-50 rounded">
               {categoryName}
             </span>
+            {attachments.length > 0 && (
+              <span className="shrink-0 px-1.5 py-0.5 text-[10px] text-blue-400 bg-blue-50 rounded">
+                {attachments.length} 附件
+              </span>
+            )}
           </div>
           <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{phrase.content}</p>
+
+          {/* Attachment thumbnails */}
+          {attachments.length > 0 && basePath && (
+            <div
+              className="flex items-center gap-1.5 mt-2 flex-wrap"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {attachments.map((att) => (
+                <button
+                  key={att.id}
+                  onClick={() => handleOpenAttachment(att.storedFileName)}
+                  className="w-9 h-9 rounded border border-gray-200 overflow-hidden hover:border-blue-300 transition-colors flex items-center justify-center bg-gray-50"
+                  title={att.originalName}
+                >
+                  {att.mimeType.startsWith('image/') ? (
+                    <img
+                      src={`file://${basePath}/${att.storedFileName}`}
+                      className="w-full h-full object-cover"
+                      alt={att.originalName}
+                    />
+                  ) : (
+                    <span className="text-[9px] font-bold text-red-500">PDF</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div
           className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
