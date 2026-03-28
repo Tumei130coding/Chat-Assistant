@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, clipboard, screen, dialog } from 'electron'
 import { join } from 'path'
+import { exec } from 'child_process'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import {
   getCategories,
@@ -17,8 +18,53 @@ import {
   getAttachmentPath,
   getAttachmentsBasePath
 } from './store'
+import { copyImageToClipboard } from './clipboard'
 
 let mainWindow: BrowserWindow | null = null
+let wechatAttachInterval: ReturnType<typeof setInterval> | null = null
+
+function startWeChatAttach(): void {
+  stopWeChatAttach()
+  // When enabling attach mode, also enable alwaysOnTop so the window floats above WeChat
+  if (mainWindow) {
+    mainWindow.setAlwaysOnTop(true)
+  }
+  wechatAttachInterval = setInterval(() => {
+    if (!mainWindow) return
+    exec(
+      `osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true'`,
+      (err, stdout) => {
+        if (err || !mainWindow) return
+        const frontApp = stdout.trim()
+        const isWeChatOrSelf =
+          frontApp === '微信' ||
+          frontApp === 'WeChat' ||
+          frontApp === 'wechat-reply-assistant' ||
+          frontApp === 'Electron'
+        if (isWeChatOrSelf) {
+          if (!mainWindow.isVisible()) {
+            mainWindow.showInactive()
+          }
+        } else {
+          if (mainWindow.isVisible()) {
+            mainWindow.hide()
+          }
+        }
+      }
+    )
+  }, 500)
+}
+
+function stopWeChatAttach(): void {
+  if (wechatAttachInterval) {
+    clearInterval(wechatAttachInterval)
+    wechatAttachInterval = null
+  }
+  // Make sure window is visible when detaching
+  if (mainWindow && !mainWindow.isVisible()) {
+    mainWindow.show()
+  }
+}
 
 function createWindow(): void {
   const settings = getSettings()
@@ -105,6 +151,11 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  // Start WeChat attach mode if enabled
+  if (settings.attachToWeChat) {
+    startWeChatAttach()
+  }
 }
 
 // IPC Handlers
@@ -151,6 +202,10 @@ function registerIpcHandlers(): void {
     clipboard.writeText(text)
     return true
   })
+  ipcMain.handle('copy-image', (_, storedFileName: string) => {
+    const fullPath = getAttachmentPath(storedFileName)
+    return copyImageToClipboard(fullPath)
+  })
 
   // Window controls
   ipcMain.handle('window-minimize', () => mainWindow?.minimize())
@@ -164,6 +219,22 @@ function registerIpcHandlers(): void {
   })
   ipcMain.handle('get-always-on-top', () => {
     return mainWindow?.isAlwaysOnTop() ?? true
+  })
+
+  // WeChat attach
+  ipcMain.handle('toggle-attach-wechat', () => {
+    const settings = getSettings()
+    const newValue = !settings.attachToWeChat
+    updateSettings({ attachToWeChat: newValue })
+    if (newValue) {
+      startWeChatAttach()
+    } else {
+      stopWeChatAttach()
+    }
+    return newValue
+  })
+  ipcMain.handle('get-attach-wechat', () => {
+    return getSettings().attachToWeChat
   })
 }
 

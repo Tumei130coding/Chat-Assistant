@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function PhraseCard({ phrase, categoryName, onEdit, onDelete }: Props) {
-  const [copied, setCopied] = useState(false)
+  const [copiedType, setCopiedType] = useState<'text' | 'image' | null>(null)
   const [basePath, setBasePath] = useState('')
 
   useEffect(() => {
@@ -18,10 +18,19 @@ export default function PhraseCard({ phrase, categoryName, onEdit, onDelete }: P
     }
   }, [phrase.attachments])
 
-  const handleCopy = async () => {
+  const showCopied = (type: 'text' | 'image') => {
+    setCopiedType(type)
+    setTimeout(() => setCopiedType(null), 1500)
+  }
+
+  const handleCopyText = async () => {
     await window.api.copyToClipboard(phrase.content)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+    showCopied('text')
+  }
+
+  const handleCopyImage = async (storedFileName: string) => {
+    await window.api.copyImage(storedFileName)
+    showCopied('image')
   }
 
   const handleOpenAttachment = (storedFileName: string) => {
@@ -32,7 +41,7 @@ export default function PhraseCard({ phrase, categoryName, onEdit, onDelete }: P
 
   return (
     <div
-      onClick={handleCopy}
+      onClick={handleCopyText}
       className="group mx-3 mb-2 p-3 bg-white rounded-lg border border-gray-100 hover:border-blue-200 hover:shadow-sm cursor-pointer transition-all relative"
     >
       <div className="flex items-start justify-between gap-2">
@@ -59,14 +68,22 @@ export default function PhraseCard({ phrase, categoryName, onEdit, onDelete }: P
               {attachments.map((att) => (
                 <button
                   key={att.id}
-                  onClick={() => handleOpenAttachment(att.storedFileName)}
+                  onClick={() =>
+                    att.mimeType.startsWith('image/')
+                      ? handleCopyImage(att.storedFileName)
+                      : handleOpenAttachment(att.storedFileName)
+                  }
                   className="w-9 h-9 rounded border border-gray-200 overflow-hidden hover:border-blue-300 transition-colors flex items-center justify-center bg-gray-50"
-                  title={att.originalName}
+                  title={
+                    att.mimeType.startsWith('image/')
+                      ? `点击复制图片: ${att.originalName}`
+                      : att.originalName
+                  }
                 >
                   {att.mimeType.startsWith('image/') ? (
                     <img
                       src={`file://${basePath}/${att.storedFileName}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover pointer-events-none"
                       alt={att.originalName}
                     />
                   ) : (
@@ -101,9 +118,11 @@ export default function PhraseCard({ phrase, categoryName, onEdit, onDelete }: P
           </button>
         </div>
       </div>
-      {copied && (
+      {copiedType && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/90 rounded-lg">
-          <span className="text-sm text-green-500 font-medium">已复制</span>
+          <span className="text-sm text-green-500 font-medium">
+            {copiedType === 'text' ? '已复制文字' : '已复制图片'}
+          </span>
         </div>
       )}
     </div>

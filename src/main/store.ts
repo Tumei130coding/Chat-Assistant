@@ -59,6 +59,7 @@ const store = new Store<StoreData>({
     ],
     settings: {
       alwaysOnTop: true,
+      attachToWeChat: true,
       windowBounds: { x: 100, y: 100, width: 340, height: 560 }
     }
   }

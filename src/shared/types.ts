@@ -34,6 +34,7 @@ export interface WindowBounds {
 
 export interface AppSettings {
   alwaysOnTop: boolean
+  attachToWeChat: boolean
   windowBounds: WindowBounds
 }
 

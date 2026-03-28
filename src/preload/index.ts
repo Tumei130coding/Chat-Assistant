@@ -24,12 +24,15 @@ const api = {
 
   // Clipboard
   copyToClipboard: (text: string) => ipcRenderer.invoke('copy-to-clipboard', text),
+  copyImage: (storedFileName: string) => ipcRenderer.invoke('copy-image', storedFileName),
 
   // Window
   minimize: () => ipcRenderer.invoke('window-minimize'),
   close: () => ipcRenderer.invoke('window-close'),
   toggleAlwaysOnTop: () => ipcRenderer.invoke('window-toggle-top'),
-  getAlwaysOnTop: () => ipcRenderer.invoke('get-always-on-top')
+  getAlwaysOnTop: () => ipcRenderer.invoke('get-always-on-top'),
+  toggleAttachWeChat: () => ipcRenderer.invoke('toggle-attach-wechat'),
+  getAttachWeChat: () => ipcRenderer.invoke('get-attach-wechat')
 }
 
 contextBridge.exposeInMainWorld('api', api)
